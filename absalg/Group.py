@@ -1,5 +1,6 @@
 from Set import Set
 from Function import Function
+import itertools
 
 class Group:
     """Group definition"""
@@ -39,6 +40,11 @@ class Group:
         self.e = e
         self.binary_op = binary_op
 
+    def is_abelian(self):
+        """Checks if the group is abelian"""
+        return all(self.binary_op((a, b)) == self.binary_op((b, a)) \
+                   for a in self.G for b in self.G)
+
     def inverse(self, elem):
         """Returns the inverse of elem"""
         if not elem in self.G:
@@ -61,5 +67,11 @@ def Zn(n):
     """ Returns the group (Z_n, +) """
     G = Set(range(n))
     binary_op = Function(G * G, G, lambda x: (x[0] + x[1]) % n)
+    return Group(G, binary_op)
+
+def Sn(n):
+    """ Returns the symettric group of order n! """
+    G = Set(g for g in itertools.permutations(range(n)))
+    binary_op = Function(G * G, G, lambda x: tuple(x[0][j] for j in x[1]))
     return Group(G, binary_op)
 
