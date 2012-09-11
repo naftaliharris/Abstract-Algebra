@@ -22,6 +22,11 @@ class Function:
             raise TypeError("Function must be called on elements of the domain")
         return self.function(elem)
 
+    def __eq__(self, other):
+        return isinstance(other, Function) and self.domain == other.domain and \
+               self.codomain == other.codomain and \
+               all(self(elem) == other(elem) for elem in self.domain)
+
     def image(self):
         return Set(self(elem) for elem in self.codomain)
 
@@ -33,8 +38,3 @@ class Function:
 
     def is_bijective(self):
         return self.is_surjective() and self.is_injective()
-
-    def __eq__(self, other):
-        return isinstance(other, Function) and self.domain == other.domain and \
-               self.codomain == other.codomain and \
-               all(self(elem) == other(elem) for elem in self.domain)
