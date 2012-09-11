@@ -1,1 +1,1 @@
-This package will attempt to implement Abstract Algebra in Python.
+This package will attempt to implement finite Abstract Algebra in Python.
