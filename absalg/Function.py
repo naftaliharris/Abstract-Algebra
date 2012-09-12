@@ -22,10 +22,17 @@ class Function:
             raise TypeError("Function must be called on elements of the domain")
         return self.function(elem)
 
+    def __hash__(self):
+        return hash(self.domain) ^ hash(self.codomain) ^ hash(self.function)
+
     def __eq__(self, other):
-        return isinstance(other, Function) and self.domain == other.domain and \
+        if not isinstance(other, Function):
+            return False
+
+        return id(self) == id(other) or ( \
+               isinstance(other, Function) and self.domain == other.domain and \
                self.codomain == other.codomain and \
-               all(self(elem) == other(elem) for elem in self.domain)
+               all(self(elem) == other(elem) for elem in self.domain) )
 
     def image(self):
         return Set(self(elem) for elem in self.domain)

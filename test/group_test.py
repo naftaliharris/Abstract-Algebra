@@ -17,6 +17,7 @@ class test_group(unittest.TestCase):
             self.assertEquals(len(Z/Z), 1)
             if n <= 5: # takes a while
                 self.assertEquals(len(Z * Z), n * n)
+            self.assertEquals(Z.generate(Z.G), Z)
 
     def test_Sn(self):
         for n in range(1, 5):
@@ -37,6 +38,15 @@ class test_group(unittest.TestCase):
             self.assertEquals(len(S/S), 1)
             if n <= 3:
                 self.assertEquals(len(S * S), factorial(n)**2)
+            self.assertEquals(S.generate(S.G), S)
+
+    def test_subgroups(self):
+        Z9 = Zn(9)
+        self.assertEquals(len(Z9.subgroups()), 3)
+        V = Zn(2) * Zn(2)
+        self.assertEquals(len(V.subgroups()), 5)
+        S3 = Sn(3)
+        self.assertEquals(len(S3.subgroups()), 6)
 
 if __name__ == "__main__":
     unittest.main()
