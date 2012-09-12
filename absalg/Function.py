@@ -28,7 +28,7 @@ class Function:
                all(self(elem) == other(elem) for elem in self.domain)
 
     def image(self):
-        return Set(self(elem) for elem in self.codomain)
+        return Set(self(elem) for elem in self.domain)
 
     def is_surjective(self):
         return self.image() == self.codomain
@@ -38,3 +38,15 @@ class Function:
 
     def is_bijective(self):
         return self.is_surjective() and self.is_injective()
+
+    def compose(self, other):
+        """Returns x -> self(other(x))"""
+        if not self.domain == other.codomain:
+            raise ValueError("codomain of other must match domain of self")
+        return Function(other.domain, self.codomain, lambda x: self(other(x)))
+
+def identity(s):
+    """Returns the identity function on the set s"""
+    if not isinstance(s, Set):
+        raise TypeError("s must be a set")
+    return Function(s, s, lambda x: x)

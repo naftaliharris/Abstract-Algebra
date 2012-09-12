@@ -64,7 +64,7 @@ class Group:
         return Group(self.G * other.G, binary_op)
 
 def Zn(n):
-    """ Returns the group (Z_n, +) """
+    """ Returns the cylic group of order n"""
     G = Set(range(n))
     binary_op = Function(G * G, G, lambda x: (x[0] + x[1]) % n)
     return Group(G, binary_op)
@@ -74,4 +74,3 @@ def Sn(n):
     G = Set(g for g in itertools.permutations(range(n)))
     binary_op = Function(G * G, G, lambda x: tuple(x[0][j] for j in x[1]))
     return Group(G, binary_op)
-
