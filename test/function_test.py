@@ -7,6 +7,7 @@ class test_function(unittest.TestCase):
         s = Set([0, 1, 2, 3])
         t = Set([1, 2, 3, 4])
         f = Function(s, t, lambda x: x + 1)
+        str(f)
         for x in range(4):
             self.assertEquals(f(x), x + 1)
         self.assertEquals(f, f)
@@ -31,21 +32,25 @@ class test_function(unittest.TestCase):
         self.assertEquals(f.is_injective(), True)
         self.assertEquals(f.is_bijective(), True)
         self.assertEquals(f.image(), t)
+        str(f)
 
         self.assertEquals(g.is_surjective(), False)
         self.assertEquals(g.is_injective(), True)
         self.assertEquals(g.is_bijective(), False)
         self.assertEquals(g.image(), Set([2, 3, 4, 5]))
+        str(g)
 
         self.assertEquals(h.is_surjective(), False)
         self.assertEquals(h.is_injective(), True)
         self.assertEquals(h.is_bijective(), False)
         self.assertEquals(h.image(), Set([2, 3, 4, 5]))
+        str(h)
 
         self.assertEquals(i.is_surjective(), True)
         self.assertEquals(i.is_injective(), False)
         self.assertEquals(i.is_bijective(), False)
         self.assertEquals(i.image(), Set([0, 1]))
+        str(i)
 
         with self.assertRaises(ValueError):
             i.compose(f)
@@ -55,6 +60,7 @@ class test_function(unittest.TestCase):
     def test_identity(self):
         s = Set(["las", 3, "ksjfdlka"])
         ID = identity(s)
+        str(ID)
         for item in s:
             self.assertEquals(ID(item), item)
 

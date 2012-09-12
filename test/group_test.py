@@ -6,6 +6,7 @@ class test_group(unittest.TestCase):
     def test_Zn(self):
         for n in range(1, 10):
             Z = Zn(n)
+            str(Z)
             self.assertEquals(Z.e, 0)
             self.assertEquals(len(Z), n)
             self.assertTrue(all(Z(a, b) == (a + b) % n for a in Z for b in Z))
@@ -20,6 +21,7 @@ class test_group(unittest.TestCase):
     def test_Sn(self):
         for n in range(1, 5):
             S = Sn(n)
+            str(S)
             self.assertEquals(S.e, tuple(xrange(n)))
             self.assertEquals(len(S), factorial(n))
             self.assertTrue(all(S.inverse(a) == \

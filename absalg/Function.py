@@ -30,6 +30,18 @@ class Function:
     def image(self):
         return Set(self(elem) for elem in self.domain)
 
+    def __str__(self):
+        """Pretty outputing of functions"""
+
+        # Figure out formatting
+        maxlen = max(len(str(x)) for x in self.domain) if self.domain else 0
+        formatstr1 = "{0:<%d} -> {1}\n" % maxlen
+        formatstr2 = "{0:<%d}{1}\n" % (maxlen + 4)
+        nothit = self.codomain - self.image()
+
+        return("".join(formatstr1.format(x, self(x)) for x in self.domain) + \
+               "".join(formatstr2.format("", y) for y in nothit))
+
     def is_surjective(self):
         return self.image() == self.codomain
 
