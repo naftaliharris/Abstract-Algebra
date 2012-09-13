@@ -15,3 +15,12 @@ class Set(frozenset):
         if not isinstance(other, Set):
             raise TypeError("One of the objects is not a set")
         return Set((x, y) for x in self for y in other)
+
+    def pick(self):
+        """Return an arbitrary element. (The finite Axiom of Choice is true!)"""
+
+        if len(self) == 0:
+            raise KeyError("This is an empty set")
+
+        for item in self: break
+        return item

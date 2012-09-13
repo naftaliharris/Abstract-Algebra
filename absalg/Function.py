@@ -13,9 +13,16 @@ class Function:
             raise TypeError("Codomain must be a Set")
         if not all(function(elem) in codomain for elem in domain):
             raise TypeError("Function returns some value outside of codomain")
+
+        self._extras(domain, codomain, function)
+
         self.domain = domain
         self.codomain = codomain
         self.function = function
+
+    def _extras(self, domain, codomain, function):
+        """implemented in Function subclasses for extra __init__ procedures"""
+        pass
     
     def __call__(self, elem):
         if elem not in self.domain:
@@ -37,8 +44,17 @@ class Function:
     def __ne__(self, other):
         return not self == other
 
-    def image(self):
+    def _image(self):
+        """The literal image of the function"""
         return Set(self(elem) for elem in self.domain)
+
+    def image(self):
+        """
+        The API image of the function; can change depending on the subclass.
+
+        For example, GroupHomomorphisms return the image as a Group, not a Set.
+        """
+        return self._image()
 
     def __str__(self):
         """Pretty outputing of functions"""
@@ -47,16 +63,16 @@ class Function:
         maxlen = max(len(str(x)) for x in self.domain) if self.domain else 0
         formatstr1 = "{0:<%d} -> {1}\n" % maxlen
         formatstr2 = "{0:<%d}{1}\n" % (maxlen + 4)
-        nothit = self.codomain - self.image()
+        nothit = self.codomain - self._image()
 
         return("".join(formatstr1.format(x, self(x)) for x in self.domain) + \
                "".join(formatstr2.format("", y) for y in nothit))
 
     def is_surjective(self):
-        return self.image() == self.codomain
+        return self._image() == self.codomain
 
     def is_injective(self):
-        return len(self.image()) == len(self.domain)
+        return len(self._image()) == len(self.domain)
 
     def is_bijective(self):
         return self.is_surjective() and self.is_injective()
@@ -66,6 +82,9 @@ class Function:
         if not self.domain == other.codomain:
             raise ValueError("codomain of other must match domain of self")
         return Function(other.domain, self.codomain, lambda x: self(other(x)))
+
+    def new_domains(self, domain, codomain):
+        return Function(domain, codomain, self.function)
 
 def identity(s):
     """Returns the identity function on the set s"""

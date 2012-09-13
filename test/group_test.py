@@ -41,12 +41,26 @@ class test_group(unittest.TestCase):
             self.assertEquals(S.generate(S), S)
 
     def test_subgroups(self):
-        Z9 = Zn(9)
-        self.assertEquals(len(Z9.subgroups()), 3)
-        V = Zn(2) * Zn(2)
-        self.assertEquals(len(V.subgroups()), 5)
-        S3 = Sn(3)
-        self.assertEquals(len(S3.subgroups()), 6)
+        G = Zn(9)
+        sgs = G.subgroups()
+        self.assertEquals(len(sgs), 3)
+        for H in sgs:
+            if H.is_normal_subgroup(G):
+                self.assertEquals(len(G / H) * len(H), len(G))
+
+        G = Zn(2) * Zn(2)
+        sgs = G.subgroups()
+        self.assertEquals(len(sgs), 5)
+        for H in sgs:
+            if H.is_normal_subgroup(G):
+                self.assertEquals(len(G / H) * len(H), len(G))
+
+        G = Sn(3)
+        sgs = G.subgroups()
+        self.assertEquals(len(G.subgroups()), 6)
+        for H in sgs:
+            if H.is_normal_subgroup(G):
+                self.assertEquals(len(G / H) * len(H), len(G))
 
     def test_group_elem(self):
         V = Zn(2) * Zn(2)
@@ -92,6 +106,11 @@ class test_group(unittest.TestCase):
                     self.assertEquals(h ** 2, h * h)
                     self.assertEquals(h * g, GroupElem(h.elem, G) * g)
                     self.assertEquals(g * h, g * GroupElem(h.elem, G))
+
+    def test_group_homomorphism(self):
+        Z2, Z3 = Zn(2), Zn(3)
+        Z32 = Z3 * Z2
+        
 
 if __name__ == "__main__":
     unittest.main()
