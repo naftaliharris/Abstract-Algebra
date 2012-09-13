@@ -34,6 +34,9 @@ class Function:
                self.codomain == other.codomain and \
                all(self(elem) == other(elem) for elem in self.domain) )
 
+    def __ne__(self, other):
+        return not self == other
+
     def image(self):
         return Set(self(elem) for elem in self.domain)
 

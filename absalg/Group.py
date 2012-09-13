@@ -34,6 +34,9 @@ class GroupElem:
             raise TypeError("other is not a GroupElem")
         return self.elem == other.elem
 
+    def __ne__(self, other):
+        return not self == other
+
     def __hash__(self):
         return hash(self.elem)
 
@@ -89,7 +92,7 @@ class GroupElem:
         if n == 0:
             return self.group.e
         elif n < 0:
-            return GroupElem(self.group.inverse(self.elem), self.group) ** -n
+            return self.group.inverse(self) ** -n
         elif n % 2 == 1:
             return self * (self ** (n - 1))
         else:
@@ -166,6 +169,9 @@ class Group:
 
         return id(self) == id(other) or \
                (self.Set == other.Set and self.bin_op == other.bin_op)
+
+    def __ne__(self, other):
+        return not self == other
 
     def __len__(self):
         return len(self.Set)
