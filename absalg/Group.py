@@ -10,55 +10,70 @@ class GroupElem:
     Group element definition
     
     This is mainly syntactic sugar, so you can write stuff like g * h
-    instead of group.binary_op(g, h), or group(g, h).
+    instead of group.bin_op(g, h), or group(g, h).
     """
 
     def __init__(self, elem, group):
         if not isinstance(group, Group):
             raise TypeError("group is not a Group")
-        if not elem in group.G:
+        if not elem in group.Set:
             raise TypeError("elem is not an element of group")
         self.elem = elem
         self.group = group
-        self.abelian = group.is_abelian()
 
     def __str__(self):
         return str(self.elem)
 
     def __eq__(self, other):
+        """
+        Two GroupElems are equal if they represent the same element,
+        regardless of the Groups they belong to
+        """
+
         if not isinstance(other, GroupElem):
             raise TypeError("other is not a GroupElem")
-        return id(self) == id(other) or \
-               (self.elem == other.elem and self.group == other.group)
+        return self.elem == other.elem
 
     def __hash__(self):
-        return hash(self.elem) ^ hash(self.group)
+        return hash(self.elem)
 
     def __mul__(self, other):
         """
         If other is a group element, returns self * other.
         If other = n is an int, and self is in an abelian group, returns self**n
         """
-        if self.abelian and isinstance(other, (int, long)):
+        if self.group.is_abelian() and isinstance(other, (int, long)):
             return self ** other
 
         if not isinstance(other, GroupElem):
             raise TypeError("other must be a GroupElem, or an int " \
                             "(if self's group is abelian)")
-        if not self.group == other.group:
-            raise ValueError("self and other must be in the same group")
-
-        return GroupElem(self.group(self.elem, other.elem), self.group)
+        try:
+            return GroupElem(self.group.bin_op((self.elem, other.elem)), \
+                             self.group)
+        # This can return a TypeError in Funcion.__call__ if self and other
+        # belong to different Groups. So we see if we can make sense of this
+        # operation the other way around.
+        except TypeError:
+            return other.__rmul__(self)
 
     def __rmul__(self, other):
-        """Returns self ** n if self is in an abelian group"""
-        if self.abelian and isinstance(other, (int, long)):
+        """
+        If other is a group element, returns other * self.
+        If other = n is an int, and self is in an abelian group, returns self**n
+        """
+        if self.group.is_abelian() and isinstance(other, (int, long)):
             return self ** other
-        raise TypeError("self's group must be abelian and other must be an int")
+
+        if not isinstance(other, GroupElem):
+            raise TypeError("other must be a GroupElem, or an int " \
+                            "(if self's group is abelian)")
+
+        return GroupElem(self.group.bin_op((other.elem, self.elem)), self.group)
 
     def __add__(self, other):
         """Returns self + other for Abelian groups"""
-        if self.abelian:
+        if self.group.is_abelian():
             return self * other
         raise TypeError("not an element of an abelian group")
         
@@ -82,40 +97,40 @@ class GroupElem:
 
     def __neg__(self):
         """Returns self ** -1 if self is in an abelian group"""
-        if not self.abelian:
+        if not self.group.is_abelian():
             raise TypeError("self must be in an abelian group")
         return self ** (-1)
 
     def __sub__(self, other):
         """Returns self * (other ** -1) if self is in an abelian group"""
-        if not self.abelian:
+        if not self.group.is_abelian():
             raise TypeError("self must be in an abelian group")
         return self * (other ** -1)
 
 class Group:
     """Group definition"""
-    def __init__(self, G, binary_op):
+    def __init__(self, G, bin_op):
         """Create a group, checking group axioms"""
 
         # Test types
         if not isinstance(G, Set): raise TypeError("G must be a set")
-        if not isinstance(binary_op, Function):
-            raise TypeError("binary_op must be a function")
-        if binary_op.codomain != G:
+        if not isinstance(bin_op, Function):
+            raise TypeError("bin_op must be a function")
+        if bin_op.codomain != G:
             raise TypeError("binary operation must have codomain equal to G")
-        if binary_op.domain != G * G:
+        if bin_op.domain != G * G:
             raise TypeError("binary operation must have domain equal to G * G")
 
         # Test associativity
-        if not all(binary_op((a, binary_op((b, c)))) == \
-                   binary_op((binary_op((a, b)), c)) \
+        if not all(bin_op((a, bin_op((b, c)))) == \
+                   bin_op((bin_op((a, b)), c)) \
                    for a in G for b in G for c in G):
             raise ValueError("binary operation is not associative")
 
         # Find the identity
         found_id = False
         for e in G:
-            if all(binary_op((e, a)) == a for a in G):
+            if all(bin_op((e, a)) == a for a in G):
                 found_id = True
                 break
         if not found_id:
@@ -123,36 +138,37 @@ class Group:
 
         # Test for inverses
         for a in G:
-            if not any(binary_op((a,  b)) == e for b in G):
+            if not any(bin_op((a,  b)) == e for b in G):
                 raise ValueError("G doesn't have inverses")
 
-        self.G = G
-        self.e = e
-        self.binary_op = binary_op
-        self.abelian = None # Compute this lazily
+        # At this point, we've verified that we have a Group.
+        # Now determine if the Group is abelian:
+        self.abelian = all(bin_op((a, b)) == bin_op((b, a)) \
+                           for a in G for b in G)
+
+        self.Set = G
+        self.group_elems = Set(GroupElem(g, self) for g in G)
+        self.e = GroupElem(e, self)
+        self.bin_op = bin_op
 
     def __iter__(self):
-        """Iterate over the elements in G, returning the identity first"""
+        """Iterate over the GroupElems in G, returning the identity first"""
         yield self.e
-        for g in self.G:
+        for g in self.group_elems:
             if g != self.e: yield g
 
     def __hash__(self):
-        return hash(self.G) ^ hash(self.binary_op)
+        return hash(self.Set) ^ hash(self.bin_op)
 
     def __eq__(self, other):
         if not isinstance(other, Group):
             return False
 
         return id(self) == id(other) or \
-               (self.G == other.G and self.binary_op == other.binary_op)
+               (self.Set == other.Set and self.bin_op == other.bin_op)
 
     def __len__(self):
-        return len(self.G)
-
-    def __call__(self, a, b):
-        """Returns a * b"""
-        return self.binary_op((a, b))
+        return len(self.Set)
 
     def __str__(self):
         """Returns the Cayley table"""
@@ -177,7 +193,7 @@ class Group:
         border = (len(self) + 1) * "---+" + "\n"
         result += head + "\n" + border
         result += border.join(" %s | " % l + \
-                              " | ".join(toletter[self(toelem[l], toelem[l1])] \
+                              " | ".join(toletter[toelem[l] * toelem[l1]] \
                                          for l1 in letters) + \
                               " |\n" for l in letters)
         result += border
@@ -185,85 +201,82 @@ class Group:
 
     def is_abelian(self):
         """Checks if the group is abelian"""
-        if self.abelian is None:
-            self.abelian = all(self(a, b) == self(b, a) \
-                               for a in self for b in self)
-
         return self.abelian
 
-    def is_subgroup(self, other):
+    def __le__(self, other):
         """Checks if self is a subgroup of other"""
         if not isinstance(other, Group):
-            raise TypeError("other must be a group")
-        return self.G <= other.G and \
-               all(self(a, b) == other(a, b) for a in self for b in self)
+            raise TypeError("other must be a Group")
+        return self.Set <= other.Set and \
+               all(self.bin_op((a, b)) == other.bin_op((a, b)) \
+                   for a in self.Set for b in self.Set)
 
     def is_normal_subgroup(self, other):
         """Checks if self is a normal subgroup of other"""
-        return self.is_subgroup(other) and \
-               all(Set(other(g, h) for h in self) == \
-                   Set(other(h, g) for h in self) \
+        return self <= other and \
+               all(Set(g * h for h in self) == Set(h * g for h in self) \
                    for g in other)
 
     def __div__(self, other):
         """ Returns the quotient group self / other """
         if not other.is_normal_subgroup(self):
             raise ValueError("other must be a normal subgroup of self")
-        G = Set(Set(self(g, h) for h in other) for g in self)
+        G = Set(Set(self.bin_op((g, h)) for h in other.Set) for g in self.Set)
 
         def multiply_cosets(x):
             for h in x[0]: break # pick some h from the first coset
-            return Set(self(h, g) for g in x[1])
+            return Set(self.bin_op((h, g)) for g in x[1])
 
         return Group(G, Function(G * G, G, multiply_cosets))
 
-    def inverse(self, elem):
+    def inverse(self, g):
         """Returns the inverse of elem"""
-        if not elem in self.G:
-            raise TypeError("elem isn't in the group G")
-        for a in self.G:
-            if self(a, elem) == self.e:
+        if not g in self.group_elems:
+            raise TypeError("g isn't a GroupElem in the Group")
+        for a in self:
+            if g * a == self.e:
                 return a
-        raise RuntimeError("Didn't find an inverse for elem")
+        raise RuntimeError("Didn't find an inverse for g")
 
     def __mul__(self, other):
         """Returns the cartesian product of the two groups"""
         if not isinstance(other, Group):
             raise TypeError("other must be a group")
-        binary_op = Function((self.G * other.G) * (self.G * other.G), \
-                             (self.G * other.G), \
-                             lambda x: (self(x[0][0], x[1][0]), \
-                                    other(x[0][1], x[1][1])))
+        bin_op = Function((self.Set * other.Set) * (self.Set * other.Set), \
+                             (self.Set * other.Set), \
+                             lambda x: (self.bin_op((x[0][0], x[1][0])), \
+                                        other.bin_op((x[0][1], x[1][1]))))
 
-        return Group(self.G * other.G, binary_op)
+        return Group(self.Set * other.Set, bin_op)
 
     def generate(self, elems):
         """
-        Returns the subgroup of self generated by elems
+        Returns the subgroup of self generated by GroupElems elems
         
         elems must be iterable
         """
-        if not Set(elems) <= self.G:
-            raise ValueError("elems must be a subset of self.G")
+        if not Set(elems) <= self.group_elems:
+            raise ValueError("elems must be a subset of self.group_elems")
         if len(elems) == 0:
             raise ValueError("elems must have at least one element")
 
         oldG = Set(elems)
         while True:
-            newG = oldG | Set(self(a, b) for a in oldG for b in oldG)
+            newG = oldG | Set(a * b for a in oldG for b in oldG)
             if oldG == newG: break
             else: oldG = newG
+        oldG = Set(g.elem for g in oldG)
 
-        return Group(oldG, Function(oldG * oldG, oldG, self.binary_op))
+        return Group(oldG, Function(oldG * oldG, oldG, self.bin_op))
 
     def subgroups(self):
         """Returns the Set of self's subgroups"""
 
         old_sgs = Set([self.generate([self.e])])
         while True:
-            new_sgs = old_sgs | Set(self.generate(list(sg.G) + [g]) \
+            new_sgs = old_sgs | Set(self.generate(list(sg.group_elems) + [g]) \
                                      for sg in old_sgs for g in self \
-                                     if g not in sg.G)
+                                     if g not in sg.group_elems)
             if new_sgs == old_sgs: break
             else: old_sgs = new_sgs
 
@@ -272,11 +285,11 @@ class Group:
 def Zn(n):
     """ Returns the cylic group of order n"""
     G = Set(range(n))
-    binary_op = Function(G * G, G, lambda x: (x[0] + x[1]) % n)
-    return Group(G, binary_op)
+    bin_op = Function(G * G, G, lambda x: (x[0] + x[1]) % n)
+    return Group(G, bin_op)
 
 def Sn(n):
     """ Returns the symmetric group of order n! """
     G = Set(g for g in itertools.permutations(range(n)))
-    binary_op = Function(G * G, G, lambda x: tuple(x[0][j] for j in x[1]))
-    return Group(G, binary_op)
+    bin_op = Function(G * G, G, lambda x: tuple(x[0][j] for j in x[1]))
+    return Group(G, bin_op)
