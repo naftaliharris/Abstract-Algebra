@@ -1,10 +1,96 @@
 """Group implementation"""
 
-import string
 import itertools
 
 from Set import Set
 from Function import Function
+
+class GroupElem:
+    """
+    Group element definition
+    
+    This is mainly syntactic sugar, so you can write stuff like g * h
+    instead of group.binary_op(g, h), or group(g, h).
+    """
+
+    def __init__(self, elem, group):
+        if not isinstance(group, Group):
+            raise TypeError("group is not a Group")
+        if not elem in group.G:
+            raise TypeError("elem is not an element of group")
+        self.elem = elem
+        self.group = group
+        self.abelian = group.is_abelian()
+
+    def __str__(self):
+        return str(self.elem)
+
+    def __eq__(self, other):
+        if not isinstance(other, GroupElem):
+            raise TypeError("other is not a GroupElem")
+        return id(self) == id(other) or \
+               (self.elem == other.elem and self.group == other.group)
+
+    def __hash__(self):
+        return hash(self.elem) ^ hash(self.group)
+
+    def __mul__(self, other):
+        """
+        If other is a group element, returns self * other.
+        If other = n is an int, and self is in an abelian group, returns self**n
+        """
+        if self.abelian and isinstance(other, (int, long)):
+            return self ** other
+
+        if not isinstance(other, GroupElem):
+            raise TypeError("other must be a GroupElem, or an int " \
+                            "(if self's group is abelian)")
+        if not self.group == other.group:
+            raise ValueError("self and other must be in the same group")
+
+        return GroupElem(self.group(self.elem, other.elem), self.group)
+
+    def __rmul__(self, other):
+        """Returns self ** n if self is in an abelian group"""
+        if self.abelian and isinstance(other, (int, long)):
+            return self ** other
+        raise TypeError("self's group must be abelian and other must be an int")
+
+    def __add__(self, other):
+        """Returns self + other for Abelian groups"""
+        if self.abelian:
+            return self * other
+        raise TypeError("not an element of an abelian group")
+        
+    def __pow__(self, n, modulo=None):
+        """
+        Returns self**n
+        
+        modulo is included as an argument to comply with the API, and ignored
+        """
+        if not isinstance(n, (int, long)):
+            raise TypeError("n must be an int or a long")
+
+        if n == 0:
+            return self.group.e
+        elif n < 0:
+            return GroupElem(self.group.inverse(self.elem), self.group) ** -n
+        elif n % 2 == 1:
+            return self * (self ** (n - 1))
+        else:
+            return (self * self) ** (n / 2)
+
+    def __neg__(self):
+        """Returns self ** -1 if self is in an abelian group"""
+        if not self.abelian:
+            raise TypeError("self must be in an abelian group")
+        return self ** (-1)
+
+    def __sub__(self, other):
+        """Returns self * (other ** -1) if self is in an abelian group"""
+        if not self.abelian:
+            raise TypeError("self must be in an abelian group")
+        return self * (other ** -1)
 
 class Group:
     """Group definition"""
@@ -43,6 +129,7 @@ class Group:
         self.G = G
         self.e = e
         self.binary_op = binary_op
+        self.abelian = None # Compute this lazily
 
     def __iter__(self):
         """Iterate over the elements in G, returning the identity first"""
@@ -98,7 +185,11 @@ class Group:
 
     def is_abelian(self):
         """Checks if the group is abelian"""
-        return all(self(a, b) == self(b, a) for a in self for b in self)
+        if self.abelian is None:
+            self.abelian = all(self(a, b) == self(b, a) \
+                               for a in self for b in self)
+
+        return self.abelian
 
     def is_subgroup(self, other):
         """Checks if self is a subgroup of other"""
