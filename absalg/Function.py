@@ -30,14 +30,28 @@ class Function:
         return self.function(elem)
 
     def __hash__(self):
-        return hash(self.domain) ^ hash(self.codomain) ^ hash(self.function)
+        """Returns the hash of self"""
+
+        # Need to be a little careful, since self.domain and self.codomain are
+        # often the same, and we don't want to cancel out their hashes by xoring
+        # them against each other.
+        # 
+        # Also, functions we consider equal, like lambda x: x + 1, and 
+        # def jim(x): return x + 1, have different hashes, so we can't include 
+        # the hash of self.function.
+        #
+        # Finally, we should make sure that if you switch the domain and 
+        # codomain, the hash will (usually) change, so you can't just add or
+        # multiply the hashes together.
+
+        return hash(self.domain) + 2 * hash(self.codomain)
 
     def __eq__(self, other):
         if not isinstance(other, Function):
             return False
 
         return id(self) == id(other) or ( \
-               isinstance(other, Function) and self.domain == other.domain and \
+               self.domain == other.domain and \
                self.codomain == other.codomain and \
                all(self(elem) == other(elem) for elem in self.domain) )
 

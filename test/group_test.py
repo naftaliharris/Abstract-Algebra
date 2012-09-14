@@ -70,6 +70,7 @@ class test_group(unittest.TestCase):
         self.assertEquals(b + c, a)
         self.assertEquals(a + c, b)
         for g in V:
+            self.assertTrue(g in V)
             self.assertEquals(g, g)
             self.assertEquals(e * g, g)
             self.assertEquals(g * e, g)
@@ -107,10 +108,35 @@ class test_group(unittest.TestCase):
                     self.assertEquals(h * g, GroupElem(h.elem, G) * g)
                     self.assertEquals(g * h, g * GroupElem(h.elem, G))
 
-    def test_group_homomorphism(self):
-        Z2, Z3 = Zn(2), Zn(3)
-        Z32 = Z3 * Z2
-        
+    def test_generators(self):
+        for G in [Zn(1), Zn(2), Zn(5), Zn(8), Sn(1), Sn(2), Sn(3), \
+                  Dn(1), Dn(2), Dn(3), Dn(4)]:
+            self.assertEquals(G, G.generate(G.generators()))
+            self.assertEquals(G, G.generate(g.elem for g in G.generators()))
+
+    def test_find_isomorphism(self):
+        f = Dn(2).find_isomorphism(Zn(2) * Zn(2))
+        self.assertTrue(f is not None)
+        self.assertTrue(f.is_isomorphism())
+        self.assertEquals(f.kernel(), Dn(2).generate([Dn(2).e]))
+        self.assertEquals(f.image(), Zn(2) * Zn(2))
+
+        self.assertFalse(Dn(12).is_isomorphic(Sn(4)))
+        self.assertFalse(Sn(3).is_isomorphic(Zn(6)))
+        self.assertFalse(Sn(3).is_isomorphic(Zn(4)))
+
+        for G in [Zn(1), Zn(2), Zn(5), Sn(1), Sn(3), Dn(1), Dn(4)]:
+            self.assertTrue(G.is_isomorphic(G))
+            f = G.find_isomorphism(G)
+            self.assertTrue(f is not None)
+            self.assertTrue(f.is_isomorphism())
+            self.assertEquals(f.kernel(), G.generate([G.e]))
+            self.assertEquals(f.image(), G)
+
+        self.assertTrue(Zn(1).is_isomorphic(Sn(1)))
+        self.assertTrue(Zn(2).is_isomorphic(Sn(2)))
+        self.assertTrue(Zn(2).is_isomorphic(Dn(1)))
+
 
 if __name__ == "__main__":
     unittest.main()
