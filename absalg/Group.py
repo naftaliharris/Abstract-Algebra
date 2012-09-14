@@ -362,8 +362,7 @@ class Group:
                 func.update(noobs)
 
             if not counterexample:
-                return GroupHomomorphism(self.group_elems, other.group_elems, \
-                                         lambda x: func[x])
+                return GroupHomomorphism(self, other, lambda x: func[x])
 
         return None
 
@@ -376,50 +375,37 @@ class GroupHomomorphism(Function):
     """
     The definition of a Group Homomorphism
     
-    A GroupHomomorphism is a Function between Sets of GroupElems, that obeys
-    the group homomorphism axioms.
+    A GroupHomomorphism is a Function between Groups that obeys the group 
+    homomorphism axioms.
     """
 
-    def _extras(self, domain, codomain, function):
+    def __init__(self, domain, codomain, function):
         """Check types and the homomorphism axioms; records the two groups"""
 
-        if not all(isinstance(g, GroupElem) for g in domain):
-            raise TypeError("Elements of the domain must be GroupElems")
-        if not all(isinstance(g, GroupElem) for g in codomain):
-            raise TypeError("Elements of the codomain must be GroupElems")
-
-        domain_group = domain.pick().group
-        codomain_group = codomain.pick().group
-
-        if not all(g.group == domain_group for g in domain):
-            raise TypeError("domain GroupElements disagree about the Group " \
-                            "they belong to")
-        if not all(g.group == codomain_group for g in codomain):
-            raise TypeError("codomain GroupElements disagree about the Group " \
-                            "they belong to")
-
-        if not domain == domain_group.group_elems:
-            raise ValueError("domain is the wrong set of GroupElems")
-        if not codomain == codomain_group.group_elems:
-            raise ValueError("codomain is the wrong set of GroupElems")
+        if not isinstance(domain, Group):
+            raise TypeError("domain must be a Group")
+        if not isinstance(codomain, Group):
+            raise TypeError("codomain must be a Group")
+        if not all(function(elem) in codomain for elem in domain):
+            raise TypeError("Function returns some value outside of codomain")
 
         if not all(function(a * b) == function(a) * function(b) \
                    for a in domain for b in domain):
             raise ValueError("function doesn't satisfy the homomorphism axioms")
 
-        self.domain_group = domain_group
-        self.codomain_group = codomain_group
+        self.domain = domain
+        self.codomain = codomain
+        self.function = function
 
     def kernel(self):
         """Returns the kernel of the homomorphism as a Group object"""
-
-        G = Set(g.elem for g in self.domain if self(g) == self.codomain_group.e)
-        return Group(G, self.domain_group.bin_op.new_domains(G * G, G))
+        G = Set(g.elem for g in self.domain if self(g) == self.codomain.e)
+        return Group(G, self.domain.bin_op.new_domains(G * G, G))
 
     def image(self):
         """Returns the image of the homomorphism as a Group object"""
         G = Set(g.elem for g in self._image())
-        return Group(G, self.codomain_group.bin_op.new_domains(G * G, G))
+        return Group(G, self.codomain.bin_op.new_domains(G * G, G))
 
     def is_isomorphism(self):
         return self.is_bijective()

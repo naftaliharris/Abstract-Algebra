@@ -7,6 +7,12 @@ from Set import Set
 class Function:
     """Definition of a finite function"""
     def __init__(self, domain, codomain, function):
+        """
+        Initialize the function and check that it is well-formed.
+
+        This method can be overwritten by subclasses of Function, so that for
+        example GroupHomomorphisms can be between Groups, rather than Sets.
+        """
         if not isinstance(domain, Set):
             raise TypeError("Domain must be a Set")
         if not isinstance(codomain, Set):
@@ -14,16 +20,10 @@ class Function:
         if not all(function(elem) in codomain for elem in domain):
             raise TypeError("Function returns some value outside of codomain")
 
-        self._extras(domain, codomain, function)
-
         self.domain = domain
         self.codomain = codomain
         self.function = function
 
-    def _extras(self, domain, codomain, function):
-        """implemented in Function subclasses for extra __init__ procedures"""
-        pass
-    
     def __call__(self, elem):
         if elem not in self.domain:
             raise TypeError("Function must be called on elements of the domain")
@@ -83,7 +83,9 @@ class Function:
                "".join(formatstr2.format("", y) for y in nothit))
 
     def is_surjective(self):
-        return self._image() == self.codomain
+        # Need to make self.domain into a Set, since it might not be in
+        # subclasses of Function
+        return self._image() == Set(self.codomain)
 
     def is_injective(self):
         return len(self._image()) == len(self.domain)
