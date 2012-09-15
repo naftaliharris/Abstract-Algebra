@@ -110,6 +110,11 @@ class GroupElem:
             raise TypeError("self must be in an abelian group")
         return self * (other ** -1)
 
+    def order(self):
+        """Returns the order of self in the Group"""
+        return len(self.group.generate([self]))
+
+
 class Group:
     """Group definition"""
     def __init__(self, G, bin_op):
@@ -284,6 +289,10 @@ class Group:
         oldG = Set(g.elem for g in oldG)
 
         return Group(oldG, self.bin_op.new_domains(oldG * oldG, oldG))
+
+    def is_cyclic(self):
+        """Checks if self is a cyclic Group"""
+        return any(g.order() == len(self) for g in self)
 
     def subgroups(self):
         """Returns the Set of self's subgroups"""

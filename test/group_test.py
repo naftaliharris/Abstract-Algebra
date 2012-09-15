@@ -137,6 +137,18 @@ class test_group(unittest.TestCase):
         self.assertTrue(Zn(2).is_isomorphic(Sn(2)))
         self.assertTrue(Zn(2).is_isomorphic(Dn(1)))
 
+    def test_cyclic(self):
+        for n in range(1, 10):
+            self.assertTrue(Zn(n).is_cyclic())
+
+        self.assertTrue(Sn(1).is_cyclic())
+        self.assertTrue(Sn(2).is_cyclic())
+        self.assertFalse(Sn(3).is_cyclic())
+
+        self.assertTrue(Dn(1).is_cyclic())
+        self.assertFalse(Dn(2).is_cyclic())
+        self.assertFalse(Dn(3).is_cyclic())
+
 
 if __name__ == "__main__":
     unittest.main()
