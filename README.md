@@ -1,4 +1,4 @@
-This package attempts to implemenent finite abstract algebra in python.
+This package attempts to implement finite abstract algebra in python.
 It is written by Naftali Harris and licensed under the GNU General Public 
 License, Version 3.
 
