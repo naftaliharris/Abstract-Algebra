@@ -132,7 +132,7 @@ class Group:
         # Test associativity
         if not all(bin_op((a, bin_op((b, c)))) == \
                    bin_op((bin_op((a, b)), c)) \
-                   for a in G for b in G for c in G):
+                   for a, b, c in itertools.product(G, G, G)):
             raise ValueError("binary operation is not associative")
 
         # Find the identity
@@ -152,7 +152,7 @@ class Group:
         # At this point, we've verified that we have a Group.
         # Now determine if the Group is abelian:
         self.abelian = all(bin_op((a, b)) == bin_op((b, a)) \
-                           for a in G for b in G)
+                           for a, b in itertools.product(G, G))
 
         self.Set = G
         self.group_elems = Set(GroupElem(g, self) for g in G)
@@ -223,7 +223,7 @@ class Group:
             raise TypeError("other must be a Group")
         return self.Set <= other.Set and \
                all(self.bin_op((a, b)) == other.bin_op((a, b)) \
-                   for a in self.Set for b in self.Set)
+                   for a, b in itertools.product(self.Set, self.Set))
 
     def is_normal_subgroup(self, other):
         """Checks if self is a normal subgroup of other"""
@@ -283,7 +283,7 @@ class Group:
 
         oldG = elems
         while True:
-            newG = oldG | Set(a * b for a in oldG for b in oldG)
+            newG = oldG | Set(a * b for a, b in itertools.product(oldG, oldG))
             if oldG == newG: break
             else: oldG = newG
         oldG = Set(g.elem for g in oldG)
@@ -399,7 +399,7 @@ class GroupHomomorphism(Function):
             raise TypeError("Function returns some value outside of codomain")
 
         if not all(function(a * b) == function(a) * function(b) \
-                   for a in domain for b in domain):
+                   for a, b in itertools.product(domain, domain)):
             raise ValueError("function doesn't satisfy the homomorphism axioms")
 
         self.domain = domain
